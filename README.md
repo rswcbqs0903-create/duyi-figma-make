@@ -25,3 +25,9 @@
 - Figma MCP：`FIGMA_MCP_URL`、`FIGMA_MCP_SERVER_URL`、`FIGMA_API_KEY`、`DEBUG_FIGMA`
 
 其中密钥类变量需要按实际账号填写；其余变量在代码中已有默认值，`server/.env` 中已补充对应默认配置，便于直接查看和修改。
+
+## 模型结构化输出
+
+- `DeepSeek` 使用“文本 JSON + 手动提取 + Zod 校验”的兼容方案，避免 function calling 返回格式不稳定导致流程中断。
+- `GLM` 继续使用原生 function calling 结构化输出。
+- `Capability` 能力分析提示词已与 schema 对齐，明确约束 `supportedGoals`、`optional`、`description` 与 `fields` 的必填格式。
