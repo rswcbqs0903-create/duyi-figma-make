@@ -12,18 +12,26 @@ export const CAPABILITY_SYSTEM_PROMPT = `
 设计一个最小可行性产品（MVP）的架构蓝图，必须包含以下三个维度的详细规划：
 
 1. **页面规划 (Pages)**：规划支撑用户流程所需的最少页面集合。
-   - **PageType**: \`list\` (列表/索引), \`detail\` (详情), \`form\` (增删改表单), \`dashboard\` (统计/概览), \`workspace\` (复杂操作台)。
+   - 每个页面对象都必须同时包含：\`pageType\`、\`pageId\`、\`description\`、\`supportedGoals\`。
+   - **PageType**: 只能使用 \`landing\`、\`dashboard\`、\`list\`、\`detail\`、\`form\`、\`workspace\`、\`settings\`、\`profile\`、\`other\` 之一。
    - **PageId**: 必须唯一，使用 PascalCase（如 \`ArticleList\`）。
+   - **Description**: 必填，使用中文说明页面用途。
+   - **SupportedGoals**: 必填，类型必须是字符串数组，例如 \`["查看文章列表", "筛选文章"]\`，不能省略。
    - **原则**: 避免过度设计，确保页面流程闭环。
 
 2. **核心行为 (Behaviors)**：定义用户在这些页面上可执行的具体操作。
+   - 每个行为对象都必须同时包含：\`behaviorId\`、\`description\`、\`scope\`、\`optional\`。
    - **BehaviorId**: 使用 camelCase（如 \`publishArticle\`）。
+   - **Description**: 必填，使用中文说明行为用途。
    - **Scope**: 明确该行为发生在哪些 PageId 上（必须引用上一步定义的 PageId）。
+   - **Optional**: 必填，类型必须是布尔值，只能是 \`true\` 或 \`false\`，不能省略。
    - **涵盖**: 跳转 (navigate), 数据操作 (create, update, delete), 业务动作 (publish, approve), 交互 (search, filter)。
 
 3. **数据模型 (Data Models)**：抽象核心业务实体。
+   - 每个数据模型对象都必须同时包含：\`modelId\`、\`description\`、\`complexity\`、\`fields\`。
    - **ModelId**: 使用 PascalCase 单数形式（如 \`Article\`, \`User\`）。
-   - **Fields**: 列出关键字段名（id, title, status, createdAt 等）。
+   - **Description**: 必填，使用中文说明模型用途。
+   - **Fields**: 必填，类型必须是字符串数组，只能列字段名，例如 \`["id", "title", "status", "createdAt"]\`；严禁输出对象数组，例如 \`[{ "name": "id", "type": "string" }]\`。
    - **Complexity** (必须从以下枚举中**严格四选一**，**绝对禁止**使用其他未定义的值):
      - \`simple\` (适用于极简实体，如标签、评论): 表示该数据结构非常简单，通常只有少量字段，且无复杂关系。
      - \`list+detail\` (适用于大部分业务实体，如文章、订单): 表示该数据通常会有列表页和详情页，需要标准的增删改查。
@@ -50,6 +58,42 @@ export const CAPABILITY_SYSTEM_PROMPT = `
 
 5. **关系推导**：
    - 如果用户提到 "管理订单"，通常暗示了 \`OrderList\` (列表) 和 \`OrderDetail\` (详情) 两个页面，以及 \`Order\` 模型。
+
+【必须遵守的输出结构】
+输出对象必须严格匹配以下形状，字段不得遗漏：
+\`\`\`json
+{
+  "pages": [
+    {
+      "pageType": "list",
+      "pageId": "ArticleList",
+      "description": "展示文章列表并支持筛选",
+      "supportedGoals": ["查看文章列表", "筛选文章"]
+    }
+  ],
+  "behaviors": [
+    {
+      "behaviorId": "filterArticles",
+      "description": "按条件筛选文章",
+      "scope": ["ArticleList"],
+      "optional": false
+    }
+  ],
+  "dataModels": [
+    {
+      "modelId": "Article",
+      "description": "文章核心业务数据",
+      "complexity": "list+detail",
+      "fields": ["id", "title", "status", "createdAt"]
+    }
+  ]
+}
+\`\`\`
+
+【禁止事项】
+- 禁止省略 \`supportedGoals\`、\`optional\`、\`description\`、\`fields\`。
+- 禁止把 \`fields\` 写成对象数组；它必须是字段名字符串数组。
+- 禁止输出 schema 中不存在的额外包装层。
 
 请输出严格符合 JSON Schema 的结果。
 ${JSON_SAFETY_PROMPT}
