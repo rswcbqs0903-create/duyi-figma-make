@@ -1,0 +1,28 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    env_file:
+      - ./server/.env
+    environment:
+      - PORT=7001
+    ports:
+      - "7001:7001"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://server:7001
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BACKEND_URL=http://server:7001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    restart: unless-stopped
