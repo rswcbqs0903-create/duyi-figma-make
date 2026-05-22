@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
+const backendUrl = process.env.BACKEND_URL || "http://localhost:7001";
+
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -16,7 +17,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:7001/api/:path*", // Proxy to Backend
+        destination: `${backendUrl}/api/:path*`,
       },
     ];
   },
