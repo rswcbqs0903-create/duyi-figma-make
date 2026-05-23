@@ -3,10 +3,13 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    # 我们不在构建时传参，直接在运行时或使用 pnpm 自带的配置来解决
+    network_mode: "host"  # <--- 添加这一行，强制使用宿主机网络
     env_file:
       - ./server/.env
     environment:
       - PORT=7001
+      - PNPM_CONFIG_IGNORE_SCRIPTS=false
     ports:
       - "7001:7001"
     restart: unless-stopped

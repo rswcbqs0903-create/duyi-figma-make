@@ -2,6 +2,9 @@
 import { ChatMessage } from "@/types/message";
 import { StreamEvent } from "@/types/api";
 
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:7001";
+
 export async function getReactTS_Template(): Promise<
   Record<string, { code: string }>
 > {
@@ -25,8 +28,7 @@ export async function generateAppStream(
   onChunk: (event: StreamEvent) => void,
 ): Promise<void> {
   try {
-    // 临时直接连接后端，绕过 Next.js 代理以测试 SSE 问题
-    const response = await fetch("http://localhost:7001/api/chat", {
+    const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

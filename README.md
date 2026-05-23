@@ -10,6 +10,7 @@
 ├── docker-compose.yml     # 前后端同机部署编排
 ├── frontend/              # Next.js 前端应用
 │   ├── Dockerfile
+│   ├── .env.example
 │   └── README.md
 ├── server/                # Express + TypeScript 服务端
 │   ├── Dockerfile
@@ -64,6 +65,13 @@ docker compose logs -f server
 - Qwen Vision：`QWEN_API_KEY`、`QWEN_MODEL`、`QWEN_BASE_URL`
 - 阿里云 OSS：`ALI_OSS_AK`、`ALI_OSS_SK`、`ALI_OSS_ENDPOINT`、`ALI_OSS_BUCKET`
 - Figma MCP：`FIGMA_MCP_URL`、`FIGMA_MCP_SERVER_URL`、`FIGMA_API_KEY`、`DEBUG_FIGMA`
+
+## 前端环境变量
+
+前端环境变量建议放在 `frontend/.env.local`（可参考 `frontend/.env.example`）：
+
+- `NEXT_PUBLIC_BACKEND_URL`：前端浏览器侧请求后端的基础地址（如 SSE、上传）。
+- `BACKEND_URL`：`next.config.ts` 中 `/api/:path*` rewrite 的后端目标地址。
 
 ## 模型结构化输出
 
