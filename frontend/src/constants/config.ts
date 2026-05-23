@@ -6,7 +6,8 @@ export const PORTS = {
   // IMG_HOST: 8001, // 已废弃本地图床
 };
 
-export const API_BASE_URL = `http://localhost:${PORTS.SERVER}`;
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || `http://localhost:${PORTS.SERVER}`;
 // export const IMG_HOST_BASE_URL = `http://localhost:${PORTS.IMG_HOST}`; // 已废弃
 
 // 图床相关配置
