@@ -48,10 +48,12 @@ EOT
 
     stage('Build Images') {
       steps {
-        sh '''
-          set -euo pipefail
-          docker compose ${COMPOSE_FILES} -p "${COMPOSE_PROJECT_NAME}" build
-        '''
+        retry(3) {
+          sh '''
+            set -euo pipefail
+            docker compose ${COMPOSE_FILES} -p "${COMPOSE_PROJECT_NAME}" build
+          '''
+        }
       }
     }
 
