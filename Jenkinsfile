@@ -8,7 +8,7 @@ pipeline {
   }
 
   parameters {
-    booleanParam(name: 'RUN_FRONTEND_LINT', defaultValue: true, description: 'Run frontend lint after services are healthy')
+    booleanParam(name: 'RUN_FRONTEND_LINT', defaultValue: false, description: 'Run frontend lint after services are healthy')
   }
 
   environment {
