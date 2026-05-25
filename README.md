@@ -6,13 +6,15 @@
 
 ```text
 .
-├── .dockerignore          # Docker 构建忽略规则（仓库级）
-├── docker-compose.yml     # 前后端同机部署编排
-├── frontend/              # Next.js 前端应用
+├── .dockerignore              # Docker 构建忽略规则（仓库级）
+├── docker-compose.yml         # 前后端同机部署编排（本地/服务器）
+├── docker-compose.jenkins.yml # Jenkins CI 覆盖配置（强制 bridge 网络隔离）
+├── Jenkinsfile                # Jenkins Multibranch Pipeline 流水线定义
+├── frontend/                  # Next.js 前端应用
 │   ├── Dockerfile
 │   ├── .env.example
 │   └── README.md
-├── server/                # Express + TypeScript 服务端
+├── server/                    # Express + TypeScript 服务端
 │   ├── Dockerfile
 │   └── README.md
 └── README.md
@@ -52,6 +54,37 @@ docker compose logs -f server
 
 - 前端：`http://<服务器IP>:3000`
 - 后端：`http://<服务器IP>:7001`
+
+## Jenkins + Docker 隔离测试
+
+### 目标
+
+- Jenkins 从 GitHub 拉取仓库并执行流水线。
+- 每次构建使用独立容器、独立网络（按 `COMPOSE_PROJECT_NAME` 隔离）。
+- 构建结束强制清理容器、网络、卷，避免影响其他项目。
+
+### Jenkins 端前置配置
+
+1. 安装插件：`Git`、`GitHub`、`Pipeline`、`Docker Pipeline`、`Credentials Binding`、`Workspace Cleanup`。
+2. Jenkins 运行环境要能访问 Docker（如挂载 `/var/run/docker.sock`）。
+3. 在 Jenkins Credentials 中新增：
+- `duyi-server-env`（类型：Secret file，内容为服务端 `.env`）。
+
+### Multibranch Pipeline 配置
+
+1. 新建 `Multibranch Pipeline`。
+2. Branch Source 选择 GitHub，填入仓库 URL 与访问凭据。
+3. `Script Path` 设为 `Jenkinsfile`。
+4. 先手动触发一次构建验证，再按需配置 webhook 自动触发。
+
+### 流水线行为（Jenkinsfile）
+
+1. Checkout 代码。
+2. 注入凭据并生成 `server/.env`；若无 `frontend/.env.local` 则自动写入默认值。
+3. 使用 `docker compose -f docker-compose.yml -f docker-compose.jenkins.yml` 构建镜像并启动服务。
+4. 轮询健康检查：`server:7001`、`frontend:3000`。
+5. 可选执行 `frontend pnpm lint`（默认开启，可通过参数关闭）。
+6. `post always` 里导出日志并执行 `down -v --remove-orphans` 清理。
 
 ## 服务端环境变量
 
