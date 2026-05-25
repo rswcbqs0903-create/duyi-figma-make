@@ -30,7 +30,8 @@ pipeline {
         ]) {
           sh '''
             set -euo pipefail
-            cp "$SERVER_ENV_FILE" server/.env
+            cp "$SERVER_ENV_FILE" server/.env.ci
+            chmod 600 server/.env.ci
 
             if [ ! -f frontend/.env.local ]; then
               cat > frontend/.env.local <<'EOT'
