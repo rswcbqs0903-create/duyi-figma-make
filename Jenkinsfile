@@ -13,7 +13,7 @@ pipeline {
 
   environment {
     COMPOSE_PROJECT_NAME = "duyi-${env.JOB_BASE_NAME}-${env.BUILD_NUMBER}"
-    COMPOSE_FILES = "-f docker-compose.yml -f docker-compose.jenkins.yml"
+    COMPOSE_FILES = "-f docker-compose.ci.yml"
   }
 
   stages {
