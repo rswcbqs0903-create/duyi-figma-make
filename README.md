@@ -8,7 +8,7 @@
 .
 ├── .dockerignore              # Docker 构建忽略规则（仓库级）
 ├── docker-compose.yml         # 前后端同机部署编排（本地/服务器）
-├── docker-compose.jenkins.yml # Jenkins CI 覆盖配置（强制 bridge 网络隔离）
+├── docker-compose.ci.yml # Jenkins CI 覆盖配置（强制 bridge 网络隔离）
 ├── Jenkinsfile                # Jenkins Multibranch Pipeline 流水线定义
 ├── frontend/                  # Next.js 前端应用
 │   ├── Dockerfile
@@ -81,7 +81,7 @@ docker compose logs -f server
 
 1. Checkout 代码。
 2. 注入凭据并生成 `server/.env`；若无 `frontend/.env.local` 则自动写入默认值。
-3. 使用 `docker compose -f docker-compose.yml -f docker-compose.jenkins.yml` 构建镜像并启动服务。
+3. 使用 `docker compose -f docker-compose.yml -f docker-compose.ci.yml` 构建镜像并启动服务。
 4. 轮询健康检查：`server:7001`、`frontend:3000`。
 5. 可选执行 `frontend pnpm lint`（默认开启，可通过参数关闭）。
 6. `post always` 里导出日志并执行 `down -v --remove-orphans` 清理。

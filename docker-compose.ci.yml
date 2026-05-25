@@ -1,0 +1,23 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    env_file:
+      - ./server/.env.ci
+    environment:
+      - PORT=7001
+      - PNPM_CONFIG_IGNORE_SCRIPTS=false
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://server:7001
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BACKEND_URL=http://server:7001
+    depends_on:
+      - server
