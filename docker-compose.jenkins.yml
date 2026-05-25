@@ -1,6 +1,8 @@
 services:
   server:
     network_mode: bridge
+    env_file:
+      - ./server/.env.ci
 
   frontend:
     network_mode: bridge
