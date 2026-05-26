@@ -8,8 +8,10 @@
 .
 ├── .dockerignore              # Docker 构建忽略规则（仓库级）
 ├── docker-compose.yml         # 前后端同机部署编排（本地/服务器）
-├── docker-compose.ci.yml # Jenkins CI 覆盖配置（强制 bridge 网络隔离）
-├── Jenkinsfile                # Jenkins Multibranch Pipeline 流水线定义
+├── docker-compose.ci.yml      # Jenkins CI 构建/验证编排（不映射宿主机端口）
+├── docker-compose.cd.yml      # Jenkins CD 部署编排（测试环境，映射 3000/7001）
+├── Jenkinsfile                # Jenkins CI（Multibranch）流水线
+├── Jenkinsfile.cd             # Jenkins CD（Pipeline）流水线
 ├── frontend/                  # Next.js 前端应用
 │   ├── Dockerfile
 │   ├── .env.example
@@ -17,6 +19,9 @@
 ├── server/                    # Express + TypeScript 服务端
 │   ├── Dockerfile
 │   └── README.md
+├── doc/
+│   └── jenkins-ci-cd-guide.md # Jenkins CI/CD 构建流程与问题排查记录
+│   └── jenkins-cd-local-test.md # Jenkins CD 本机测试环境部署说明
 └── README.md
 ```
 
@@ -81,10 +86,19 @@ docker compose logs -f server
 
 1. Checkout 代码。
 2. 注入凭据并生成 `server/.env`；若无 `frontend/.env.local` 则自动写入默认值。
-3. 使用 `docker compose -f docker-compose.yml -f docker-compose.ci.yml` 构建镜像并启动服务。
+3. 使用 `docker compose -f docker-compose.ci.yml` 构建镜像并启动服务。
 4. 轮询健康检查：`server:7001`、`frontend:3000`。
-5. 可选执行 `frontend pnpm lint`（默认开启，可通过参数关闭）。
+5. 可选执行 `frontend pnpm lint`（默认关闭，可通过参数开启）。
 6. `post always` 里导出日志并执行 `down -v --remove-orphans` 清理。
+
+## Jenkins CD（本机测试环境）
+
+1. 新建 `Pipeline` 类型 Job（非 Multibranch）。
+2. Pipeline script from SCM，`Script Path` 填 `Jenkinsfile.cd`。
+3. 手动参数化触发部署（`IMAGE_TAG`、`REBUILD_IMAGES`）。
+4. 使用 `docker-compose.cd.yml` 部署到固定测试环境：
+- frontend: `http://localhost:3000`
+- server: `http://localhost:7001`
 
 ## 服务端环境变量
 

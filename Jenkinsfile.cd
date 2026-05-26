@@ -1,0 +1,115 @@
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 40, unit: 'MINUTES')
+  }
+
+  parameters {
+    string(name: 'IMAGE_TAG', defaultValue: 'latest', description: '镜像标签，例如 latest 或 main-16')
+    choice(name: 'DEPLOY_ENV', choices: ['test-local'], description: '部署环境')
+    booleanParam(name: 'REBUILD_IMAGES', defaultValue: true, description: '是否在本机构建镜像后再部署')
+  }
+
+  environment {
+    CD_COMPOSE_PROJECT = 'duyi-test'
+    CD_COMPOSE_FILE = '-f docker-compose.cd.yml'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Prepare Deploy Env') {
+      steps {
+        withCredentials([
+          file(credentialsId: 'duyi-server-env', variable: 'SERVER_ENV_FILE')
+        ]) {
+          sh '''
+            set -euo pipefail
+            cp "$SERVER_ENV_FILE" server/.env
+            chmod 600 server/.env
+          '''
+        }
+      }
+    }
+
+    stage('Build Deploy Images') {
+      when {
+        expression { return params.REBUILD_IMAGES }
+      }
+      steps {
+        retry(3) {
+          sh '''
+            set -euo pipefail
+            docker compose -f docker-compose.ci.yml -p "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}" build
+            docker tag "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}-server:latest" "duyi-server:${IMAGE_TAG}"
+            docker tag "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}-frontend:latest" "duyi-frontend:${IMAGE_TAG}"
+          '''
+        }
+      }
+    }
+
+    stage('Deploy') {
+      steps {
+        sh '''
+          set -euo pipefail
+          export SERVER_IMAGE="duyi-server:${IMAGE_TAG}"
+          export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG}"
+          docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" up -d
+        '''
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        sh '''
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if wget -q -T 2 -O - http://127.0.0.1:7001/ >/dev/null; then
+              echo "Server is healthy"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Server health check failed"
+              exit 1
+            fi
+            sleep 2
+          done
+
+          for i in $(seq 1 30); do
+            if wget -q -T 2 -O - http://127.0.0.1:3000/ >/dev/null; then
+              echo "Frontend is healthy"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Frontend health check failed"
+              exit 1
+            fi
+            sleep 2
+          done
+        '''
+      }
+    }
+  }
+
+  post {
+    success {
+      sh '''
+        set +e
+        export SERVER_IMAGE="duyi-server:${IMAGE_TAG}"
+        export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG}"
+        docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" ps
+      '''
+    }
+    always {
+      archiveArtifacts artifacts: '**/compose.log', allowEmptyArchive: true
+      cleanWs(deleteDirs: true, disableDeferredWipeout: true)
+    }
+  }
+}
