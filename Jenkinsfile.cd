@@ -76,18 +76,8 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          SERVER_PORT_VALUE="${SERVER_PORT:-7101}"
-          FRONTEND_PORT_VALUE="${FRONTEND_PORT:-3100}"
-          check_url() {
-            URL="$1"
-            if command -v curl >/dev/null 2>&1; then
-              curl -fsS --max-time 2 "$URL" >/dev/null
-            else
-              wget -q -T 2 -O - "$URL" >/dev/null
-            fi
-          }
           for i in $(seq 1 30); do
-            if check_url "http://127.0.0.1:${SERVER_PORT_VALUE}/"; then
+            if docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" exec -T server sh -c 'wget -q -T 2 -O - http://127.0.0.1:7001/ >/dev/null'; then
               echo "Server is healthy"
               break
             fi
@@ -99,7 +89,7 @@ pipeline {
           done
 
           for i in $(seq 1 30); do
-            if check_url "http://127.0.0.1:${FRONTEND_PORT_VALUE}/"; then
+            if docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" exec -T frontend sh -c 'wget -q -T 2 -O - http://127.0.0.1:3000/ >/dev/null'; then
               echo "Frontend is healthy"
               break
             fi
