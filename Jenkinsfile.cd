@@ -115,7 +115,14 @@ pipeline {
       '''
     }
     always {
-      archiveArtifacts artifacts: '**/compose.log', allowEmptyArchive: true
+      sh '''
+        set +e
+        IMAGE_TAG_VALUE="${IMAGE_TAG:-latest}"
+        export SERVER_IMAGE="duyi-server:${IMAGE_TAG_VALUE}"
+        export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG_VALUE}"
+        docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" logs --no-color > compose.log
+      '''
+      archiveArtifacts artifacts: 'compose.log', allowEmptyArchive: true
       cleanWs(deleteDirs: true, disableDeferredWipeout: true)
     }
   }
