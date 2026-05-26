@@ -11,6 +11,8 @@ pipeline {
     string(name: 'IMAGE_TAG', defaultValue: 'latest', description: '镜像标签，例如 latest 或 main-16')
     choice(name: 'DEPLOY_ENV', choices: ['test-local'], description: '部署环境')
     booleanParam(name: 'REBUILD_IMAGES', defaultValue: true, description: '是否在本机构建镜像后再部署')
+    string(name: 'SERVER_PORT', defaultValue: '7101', description: '测试环境 server 暴露端口（宿主机）')
+    string(name: 'FRONTEND_PORT', defaultValue: '3100', description: '测试环境 frontend 暴露端口（宿主机）')
   }
 
   environment {
@@ -63,6 +65,8 @@ pipeline {
           IMAGE_TAG_VALUE="${IMAGE_TAG:-latest}"
           export SERVER_IMAGE="duyi-server:${IMAGE_TAG_VALUE}"
           export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG_VALUE}"
+          export SERVER_PORT="${SERVER_PORT:-7101}"
+          export FRONTEND_PORT="${FRONTEND_PORT:-3100}"
           docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" up -d
         '''
       }
@@ -72,8 +76,10 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
+          SERVER_PORT_VALUE="${SERVER_PORT:-7101}"
+          FRONTEND_PORT_VALUE="${FRONTEND_PORT:-3100}"
           for i in $(seq 1 30); do
-            if wget -q -T 2 -O - http://127.0.0.1:7001/ >/dev/null; then
+            if wget -q -T 2 -O - "http://127.0.0.1:${SERVER_PORT_VALUE}/" >/dev/null; then
               echo "Server is healthy"
               break
             fi
@@ -85,7 +91,7 @@ pipeline {
           done
 
           for i in $(seq 1 30); do
-            if wget -q -T 2 -O - http://127.0.0.1:3000/ >/dev/null; then
+            if wget -q -T 2 -O - "http://127.0.0.1:${FRONTEND_PORT_VALUE}/" >/dev/null; then
               echo "Frontend is healthy"
               break
             fi
