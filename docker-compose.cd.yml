@@ -1,0 +1,24 @@
+services:
+  server:
+    image: ${SERVER_IMAGE}
+    env_file:
+      - ./server/.env
+    environment:
+      - PORT=7001
+      - PNPM_CONFIG_IGNORE_SCRIPTS=false
+    ports:
+      - "7001:7001"
+    restart: unless-stopped
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BACKEND_URL=http://server:7001
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:7001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    restart: unless-stopped
