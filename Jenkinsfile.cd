@@ -47,9 +47,10 @@ pipeline {
         retry(3) {
           sh '''
             set -euo pipefail
+            IMAGE_TAG_VALUE="${IMAGE_TAG:-latest}"
             docker compose -f docker-compose.ci.yml -p "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}" build
-            docker tag "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}-server:latest" "duyi-server:${IMAGE_TAG}"
-            docker tag "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}-frontend:latest" "duyi-frontend:${IMAGE_TAG}"
+            docker tag "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}-server:latest" "duyi-server:${IMAGE_TAG_VALUE}"
+            docker tag "${CD_COMPOSE_PROJECT}-build-${BUILD_NUMBER}-frontend:latest" "duyi-frontend:${IMAGE_TAG_VALUE}"
           '''
         }
       }
@@ -59,8 +60,9 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          export SERVER_IMAGE="duyi-server:${IMAGE_TAG}"
-          export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG}"
+          IMAGE_TAG_VALUE="${IMAGE_TAG:-latest}"
+          export SERVER_IMAGE="duyi-server:${IMAGE_TAG_VALUE}"
+          export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG_VALUE}"
           docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" up -d
         '''
       }
@@ -102,8 +104,9 @@ pipeline {
     success {
       sh '''
         set +e
-        export SERVER_IMAGE="duyi-server:${IMAGE_TAG}"
-        export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG}"
+        IMAGE_TAG_VALUE="${IMAGE_TAG:-latest}"
+        export SERVER_IMAGE="duyi-server:${IMAGE_TAG_VALUE}"
+        export FRONTEND_IMAGE="duyi-frontend:${IMAGE_TAG_VALUE}"
         docker compose ${CD_COMPOSE_FILE} -p "${CD_COMPOSE_PROJECT}" ps
       '''
     }
