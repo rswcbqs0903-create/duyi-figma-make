@@ -78,8 +78,16 @@ pipeline {
           set -euo pipefail
           SERVER_PORT_VALUE="${SERVER_PORT:-7101}"
           FRONTEND_PORT_VALUE="${FRONTEND_PORT:-3100}"
+          check_url() {
+            URL="$1"
+            if command -v curl >/dev/null 2>&1; then
+              curl -fsS --max-time 2 "$URL" >/dev/null
+            else
+              wget -q -T 2 -O - "$URL" >/dev/null
+            fi
+          }
           for i in $(seq 1 30); do
-            if wget -q -T 2 -O - "http://127.0.0.1:${SERVER_PORT_VALUE}/" >/dev/null; then
+            if check_url "http://127.0.0.1:${SERVER_PORT_VALUE}/"; then
               echo "Server is healthy"
               break
             fi
@@ -91,7 +99,7 @@ pipeline {
           done
 
           for i in $(seq 1 30); do
-            if wget -q -T 2 -O - "http://127.0.0.1:${FRONTEND_PORT_VALUE}/" >/dev/null; then
+            if check_url "http://127.0.0.1:${FRONTEND_PORT_VALUE}/"; then
               echo "Frontend is healthy"
               break
             fi
